@@ -1,0 +1,35 @@
+{
+    "name": "uctoo/wechatopen",
+    "description": "微信开放平台SDK",
+    "keywords": [
+        "wechat open platform",
+        "weixin",
+        "weixin-sdk"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "UCT",
+            "email": "contact@uctoo.com"
+        }
+    ],
+    "require": {
+        "php":">=7.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "UCToo\\": "src/"
+        },
+        "files": [
+            "src/Payment/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "UCToo\\Tests\\": "tests/"
+        }
+    }
+}
