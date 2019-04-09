@@ -22,10 +22,7 @@
     "autoload": {
         "psr-4": {
             "UCToo\\": "src/"
-        },
-        "files": [
-            "src/Payment/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

@@ -47,9 +47,6 @@
  */
 namespace com;
 use com\wxopen\wxBizMsgCrypt;
-use app\common\model\WechatApplet;
-use think\Db;
-use think\Log;
 use com\Encryption\Encryptor;
 
 
@@ -1173,7 +1170,6 @@ class WechatOpen
 		        return false;
 			$msg = $this->_msg;
 		}
-		trace($msg, 'test1111111');
 		$xmldata=  $this->xml_encode($msg);
 		$this->log($xmldata);
 		if ($this->encrypt_type == 'aes') { //如果来源消息为加密方式
@@ -1198,11 +1194,7 @@ class WechatOpen
            $nonce = rand(77,999)*rand(605,888)*rand(11,99);
 		   $encryptor = new Encryptor($this->component_appid,$this->token,$this->encodingAesKey);
            $xmldata = $encryptor->encryptMsg($xmldata,$nonce,$timestamp);
-
-            trace($xmldata, 'test666');
-
 		}
-        trace($xmldata, 'test22222');
 		if ($return)
 			return $xmldata;
 		else
@@ -1228,7 +1220,7 @@ class WechatOpen
 	 * GET 请求
 	 * @param string $url
 	 */
-	private function http_get($url){
+    protected function http_get($url){
 		$oCurl = curl_init();
 		if(stripos($url,"https://")!==FALSE){
 			curl_setopt($oCurl, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -1266,8 +1258,6 @@ class WechatOpen
         if ($need_apiclient) {
             curl_setopt($oCurl,CURLOPT_SSLCERTTYPE,'PEM');
             curl_setopt($oCurl,CURLOPT_SSLKEYTYPE,'PEM');
-            /*$zs1 = 'C:\phpStudy\WWW\www.weiyoho.com\public\uploads\00000003\20181126\70e0bd7961bd95877662f5c8fd92c498.pem';
-            $zs2 = 'C:\phpStudy\WWW\www.weiyoho.com\public\uploads\00000003\20181126\28eb2972f336e33bad6e2a62e6043609.pem';*/
             curl_setopt ($oCurl, CURLOPT_SSLCERT, $pem_cert );
             curl_setopt ($oCurl, CURLOPT_SSLKEY, $pem_key );
         }
@@ -1284,20 +1274,16 @@ class WechatOpen
 		if (is_string($param)) {
 	            	$strPOST = $param;
 		}elseif($post_file) {
-	            	if($is_curlFile) {
-		                foreach ($param as $key => $val) {
-		                    	if (substr($val, 0, 1) == '@') {
-		                        	$param[$key] = new \CURLFile(realpath(substr((string)$val,1)),'image/jpeg','test_name');
-
-		                    	}else{
-
-                                    $mime = mime_content_type((string)$val);
-                                    $info = pathinfo((string)$val);
-                                    $name = $info['basename'];
-                                    $param[$key] = new \CURLFile(realpath((string)$val),$mime,$name);
-
-                                }
-
+	          	if($is_curlFile) {
+		             foreach ($param as $key => $val) {
+		               	if (substr($val, 0, 1) == '@') {
+		                   	$param[$key] = new \CURLFile(realpath(substr((string)$val,1)),'image/jpeg','test_name');
+		               	} else {
+                               $mime = mime_content_type((string)$val);
+                               $info = pathinfo((string)$val);
+                               $name = $info['basename'];
+                               $param[$key] = new \CURLFile(realpath((string)$val),$mime,$name);
+                            }
 		                }
 	            	}
 			$strPOST = $param;
@@ -1316,15 +1302,11 @@ class WechatOpen
 
 		try{
             $sContent = curl_exec($oCurl);
-
-
         }catch (\Exception $e){
-            trace($e->getMessage(), 'curl结果1');
+            $e->getMessage();
         }
 
-
 		$aStatus = curl_getinfo($oCurl);
-        trace($aStatus, 'curl结果2');
 		curl_close($oCurl);
 		if(intval($aStatus["http_code"])==200){
 			return $sContent;
@@ -1405,22 +1387,13 @@ class WechatOpen
                 return false;
             }
         }
-        $old_info = Db::name('wechat_applet')->where(['appid' => $appid])->find();
-
-        if($old_info['access_token_overtime'] > time()) {
-            //没过期，直接返回
-            $this->access_token = $old_info['authorizer_access_token'];
-            return $old_info['authorizer_access_token'];
-        }
-
-        /*$authname = 'wechat_access_token'.$appid;
+        $authname = 'wechat_access_token'.$appid;
 
         $rs = $this->getCache($authname);
-
         if ($rs)  {
             $this->access_token = $rs;
             return $rs;
-        }*/
+        }
 
         $data = array(
             "component_appid"=>$this->component_appid,
@@ -1428,7 +1401,6 @@ class WechatOpen
             "authorizer_refresh_token"=>$authorizer_refresh_token,
         );
         $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZER_TOKEN.'component_access_token='.$this->component_access_token, self::json_encode($data));
-
         if ($result)
         {
             $json = json_decode($result,true);
@@ -1437,14 +1409,10 @@ class WechatOpen
                 $this->errMsg = $json['errmsg'];
                 return false;
             }
-            $this->access_token = $json['authorizer_access_token'];
-            $expire = $json['expires_in'] ? intval($json['expires_in'])-100 : 7200;
-//            $this->setCache($authname,$this->access_token,$expire);
-            $appinfo = WechatApplet::get(['appid' => $appid]);//获取公众号信息
-            $appinfo->authorizer_access_token = $json['authorizer_access_token'];
-            $appinfo->access_token_overtime = time()+$expire;
-            $appinfo->save();
-            return $json;
+            $this->access_token = $json['access_token'];
+            $expire = $json['expires_in'] ? intval($json['expires_in'])-100 : 3600;
+            $this->setCache($authname,$this->access_token,$expire);
+            return $this->access_token;
         }
         return false;
     }
@@ -1474,7 +1442,7 @@ class WechatOpen
 	}
 
 	/**
-	 * 获取JSAPI授权TICKET，TODO：更新为第三方平台实现
+	 * 获取JSAPI授权TICKET，更新为第三方平台实现
 	 * @param string $appid 用于多个appid时使用,可空
 	 * @param string $jsapi_ticket 手动指定jsapi_ticket，非必要情况不建议用
 	 */
@@ -1486,41 +1454,28 @@ class WechatOpen
 		    return $this->jsapi_ticket;
 		}
 
-		$appinfo = WechatApplet::get(['appid' => $appid]);//获取公众号信息
-
-		//$authname = 'wechat_jsapi_ticket'.$appid;
-		//if ($rs = $this->getCache($authname))  {
-		//	$this->jsapi_ticket = $rs;
-		//	return $rs;
-		//}
-
-        if($appinfo['ticket_overtime'] > time()) {
-            //没过期，直接返回
-            $this->jsapi_ticket = $appinfo['ticket'];
-            return $appinfo['ticket'];
-        }
+		$authname = 'wechat_jsapi_ticket'.$appid;
+        $rs = $this->getCache($authname);
+		if ($rs)  {
+			$this->jsapi_ticket = $rs;
+			return $rs;
+		}
 
 		$result = $this->http_get(self::API_URL_PREFIX.self::GET_TICKET_URL.'access_token='.$this->access_token.'&type=jsapi');
-        trace($result,'getJsTicket');
         if ($result)
-		{
-			$json = json_decode($result,true);
-			if (!$json || !empty($json['errcode'])) {
-				$this->errCode = $json['errcode'];
-				$this->errMsg = $json['errmsg'];
-				return false;
-			}
-			$this->jsapi_ticket = $json['ticket'];
-			$expire = $json['expires_in'] ? intval($json['expires_in'])-100 : 3600;
-			//$this->setCache($authname,$this->jsapi_ticket,$expire);
-
-            $appinfo->ticket = $json['ticket'];
-            $appinfo->ticket_overtime = time()+$expire;
-            $appinfo->save();
-
-			return $this->jsapi_ticket;
-		}
-		return false;
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            $this->jsapi_ticket = $json['ticket'];
+            $expire = $json['expires_in'] ? intval($json['expires_in'])-100 : 3600;
+            $this->setCache($authname,$this->jsapi_ticket,$expire);
+            return $this->jsapi_ticket;
+        }
+        return false;
 	}
 
 
@@ -1555,7 +1510,6 @@ class WechatOpen
 	            "url"       => $url,
 	            "signature" => $sign
 	    );
-	    trace($signPackage,'getJsSign');
 	    return $signPackage;
 	}
 
@@ -1939,7 +1893,6 @@ class WechatOpen
         if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
 		//原先的上传多媒体文件接口使用 self::UPLOAD_MEDIA_URL 前缀
 		$result = $this->http_post(self::API_URL_PREFIX.self::MEDIA_UPLOAD_URL.'access_token='.$this->access_token.'&type='.$type,$data,true);
-		trace($result,'uploadMediaresult');
 		if ($result)
 		{
 			$json = json_decode($result,true);
@@ -2984,7 +2937,6 @@ class WechatOpen
 	public function sendCustomMessage($data ,$appid='', $authorizer_refresh_token=''){
 		if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
 		$result = $this->http_post(self::API_URL_PREFIX.self::CUSTOM_SEND_URL.'access_token='.$this->access_token,self::json_encode($data));
-		trace($result, 'test3333333333333333');
 		if ($result)
 		{
 			$json = json_decode($result,true);
@@ -3219,9 +3171,7 @@ class WechatOpen
      */
     public function sendUniformMessage($data, $appid, $authorizer_refresh_token){
         if (!$this->access_token && !$this->checkAuth($appid, $authorizer_refresh_token)) return false;
-        Log::write('【sendTemple】自动中参数：'.self::API_URL_PREFIX.self::WX_SEND_UNIFORM_MESSAGE.'access_token='.$this->access_token);
         $result = $this->http_post(self::API_URL_PREFIX.self::WX_SEND_UNIFORM_MESSAGE.'access_token='.$this->access_token,self::json_encode($data));
-        Log::write('【sendTemple】自动中结果：'.$result);
         if($result){
             $json = json_decode($result,true);
             if (!$json || !empty($json['errcode'])) {
@@ -4271,7 +4221,6 @@ class WechatOpen
     public function getCash($data, $mch_api_cert, $mch_api_key,$appid='', $authorizer_refresh_token='') {
         if (!$this->access_token && !$this->checkAuth($appid, $authorizer_refresh_token)) return false;
         $result = $this->http_post(self::WXAPP_TRANSFERS_URL, arrayToXml($data), false, true, $mch_api_cert, $mch_api_key);
-        trace($result, 'getCashDataResult');
         $this->log($result);
         if ($result) {
             $json = xmlToArray($result, true);
@@ -4288,7 +4237,6 @@ class WechatOpen
     public function refund($data, $mch_api_cert, $mch_api_key,$appid='', $authorizer_refresh_token='') {
         if (!$this->access_token && !$this->checkAuth($appid, $authorizer_refresh_token)) return false;
         $result = $this->http_post(self::WXAPP_REFUND_URL, arrayToXml($data), false, true, $mch_api_cert, $mch_api_key);
-        trace($result, 'refundMoney');
         $this->log($result);
         if ($result) {
             $json = xmlToArray($result, true);
@@ -5179,7 +5127,6 @@ class WechatOpen
         }
         if (!$js_code) return false;
         $result = $this->http_get(self::API_BASE_URL_PREFIX.self::WXAPP_COMPONENT_SESSION_URL.'appid='.$appid.'&js_code='.$js_code.'&grant_type=authorization_code&component_appid='.$this->component_appid.'&component_access_token='.$this->component_access_token);
-        trace($result,'getWxappSession');
         if ($result)
         {
             $json = json_decode($result,true);
@@ -5224,10 +5171,7 @@ class WechatOpen
                 'downloaddomain'=>$downloaddomain
             );
         }
-        trace($data,'wxaModifyDomain$data');
-        trace(self::json_encode($data),'wxaModifyDomain$result');
         $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXAPP_MODIFY_DOMAIN.'access_token='.$this->access_token, self::json_encode($data));
-        trace($result,'wxaModifyDomain$result');
         if ($result)
         {
             $json = json_decode($result,true);
@@ -5806,9 +5750,7 @@ class WechatOpen
             'title'=>$title,
             'data'=>$data,
         );
-        trace(self::json_encode($postdata),'templateSubscribepostdata');
         $result = $this->http_post(self::API_URL_PREFIX.self::WX_TEMPLATE_SUBSCRIBE.'access_token='.$this->access_token, self::json_encode($postdata));
-        trace($result,'templateSubscribe');
         if ($result)
         {
             $json = json_decode($result,true);
@@ -5845,7 +5787,6 @@ class WechatOpen
         );
 
         $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZATION_INFO.'component_access_token='.$this->component_access_token, self::json_encode($data));
-        trace($result, 'getAuthorizationInfo');
         if ($result)
         {
             $json = json_decode($result,true);

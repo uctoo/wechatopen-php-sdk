@@ -2,31 +2,59 @@
 // +----------------------------------------------------------------------
 // | UCToo [ Universal Convergence Technology ]
 // +----------------------------------------------------------------------
-// | Copyright (c) 2014-2017 http://uctoo.com All rights reserved.
+// | Copyright (c) 2014-2019 http://uctoo.com All rights reserved.
 // +----------------------------------------------------------------------
 // | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
 // +----------------------------------------------------------------------
 // | Author: Patrick <contact@uctoo.com>
 // +----------------------------------------------------------------------
 /**
- *	微信开放平台PHP-SDK, ThinkPHP5实例
-  *  @link http://git.oschina.net/uctoo/uctoo
+ *	微信开放平台PHP-SDK
+ *  @author  UCT <admin@uctoo.com>
+ *  @link https://git.oschina.net/uctoo/uctoo
  *  @version 1.0
  *  usage:
  *   $options = array(
  *			'token'=>'tokenaccesskey', //填写你设定的key
  *			'encodingaeskey'=>'encodingaeskey', //填写加密用的EncodingAESKey
- *			'appid'=>'wxdk1234567890', //填写高级调用功能的app id
- *			'appsecret'=>'xxxxxxxxxxxxxxxxxxx' //填写高级调用功能的密钥
+ *			'component_appid'=>'wxdk1234567890', //填写第三方平台的appid
+ *          'component_appsecret'=>'xxxxxxxxxxxxxxxxxxx', //填写第三方平台的appid
+ *			'component_access_token'=>'xxxxxxxxxxxxxxxxxxx' //填写第三方平台的密钥
  *		);
- *	 $weObj = new TPWechatOpen($options);
- *   $weObj->getAuthorizerInfo($appid);
- *   ...
+ *	 $weObj = new Wechat($options);
+ *   $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid
+ *   $weObj->setAuthorizerRefreshToken($authorizer_refresh_token);         //授权到第三方平台的公众号/小程序 authorizer_refresh_token
  *
+ *   $weObj->valid();
+ *   $type = $weObj->getRev()->getRevType();
+ *   switch($type) {
+ *   		case Wechat::MSGTYPE_TEXT:
+ *   			$weObj->text("hello, I'm wechat")->reply();
+ *   			exit;
+ *   			break;
+ *   		case Wechat::MSGTYPE_EVENT:
+ *   			....
+ *   			break;
+ *   		case Wechat::MSGTYPE_IMAGE:
+ *   			...
+ *   			break;
+ *   		default:
+ *   			$weObj->text("help info")->reply();
+ *   }
+ *
+ *   //获取菜单操作:
+ *   $menu = $weObj->getMenu();
+ *   //设置菜单
+ *   $newmenu =  array(
+ *   		"button"=>
+ *   			array(
+ *   				array('type'=>'click','name'=>'最新消息','key'=>'MENU_KEY_NEWS'),
+ *   				array('type'=>'view','name'=>'我要搜索','url'=>'http://www.baidu.com'),
+ *   				)
+ *  		);
+ *   $result = $weObj->createMenu($newmenu);
  */
 namespace com;
-use think\Db;
-use think\Request;
 use app\common\model\WechatApplet;
 
 class TPWechatOpen extends WechatOpen
@@ -38,7 +66,7 @@ class TPWechatOpen extends WechatOpen
 
         $model = model('mpopen');
         $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
-        $options['token'] = Db::name('mpopen')->where(['id' => 1])->value('token');
+        $options['token'] = $component['token'];
         $options['component_appid'] = $component['appid'];    //初始化options信息
         $options['component_appsecret'] = $component['appsecret'];
         $options['component_access_token'] = $component['component_access_token'];
@@ -66,7 +94,7 @@ class TPWechatOpen extends WechatOpen
     {
         $model = model('mpopen');
         $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
-        $options['token'] = Db::name('mpopen')->where(['id' => 1])->value('token');
+        $options['token'] = $component['token'];
         $options['component_appid'] = $component['appid'];    //初始化options信息
         $options['component_appsecret'] = $component['appsecret'];
         $options['component_access_token'] = $component['component_access_token'];
@@ -130,7 +158,7 @@ class TPWechatOpen extends WechatOpen
             }
         }
 
-        $old_info = Db::name('wechat_applet')->where(['appid' => $appid])->find();
+        $old_info = WechatApplet::get(['appid' => $appid]);//获取公众号信息
 
         if($old_info['access_token_overtime'] > time()) {
             //没过期，直接返回
@@ -170,6 +198,55 @@ class TPWechatOpen extends WechatOpen
             $appinfo->save();
 
             return $json;
+        }
+        return false;
+    }
+
+    /**
+     * 获取JSAPI授权TICKET，更新为第三方平台实现
+     * @param string $appid 用于多个appid时使用,可空
+     * @param string $jsapi_ticket 手动指定jsapi_ticket，非必要情况不建议用
+     */
+    public function getJsTicket($jsapi_ticket='',$appid='',$authorizer_refresh_token=''){
+        if (!$this->access_token && !$this->checkAuth($appid, $authorizer_refresh_token)) return false;
+        if (!$appid) $appid = $this->appid;
+        if ($jsapi_ticket) { //手动指定token，优先使用
+            $this->jsapi_ticket = $jsapi_ticket;
+            return $this->jsapi_ticket;
+        }
+
+        $appinfo = WechatApplet::get(['appid' => $appid]);//获取公众号信息
+
+        //$authname = 'wechat_jsapi_ticket'.$appid;
+        //if ($rs = $this->getCache($authname))  {
+        //	$this->jsapi_ticket = $rs;
+        //	return $rs;
+        //}
+
+        if($appinfo['ticket_overtime'] > time()) {
+            //没过期，直接返回
+            $this->jsapi_ticket = $appinfo['ticket'];
+            return $appinfo['ticket'];
+        }
+
+        $result = $this->http_get(self::API_URL_PREFIX.self::GET_TICKET_URL.'access_token='.$this->access_token.'&type=jsapi');
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            $this->jsapi_ticket = $json['ticket'];
+            $expire = $json['expires_in'] ? intval($json['expires_in'])-100 : 3600;
+            //$this->setCache($authname,$this->jsapi_ticket,$expire);
+
+            $appinfo->ticket = $json['ticket'];
+            $appinfo->ticket_overtime = time()+$expire;
+            $appinfo->save();
+
+            return $this->jsapi_ticket;
         }
         return false;
     }
