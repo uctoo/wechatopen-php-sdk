@@ -46,8 +46,6 @@
  *   $result = $weObj->createMenu($newmenu);
  */
 namespace Uctoo\Wechatopen;
-use EasyWeChat\Encryption\Encryptor;
-
 
 class WechatOpen
 {
