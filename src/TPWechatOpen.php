@@ -9,7 +9,7 @@
 // | Author: Patrick <contact@uctoo.com>
 // +----------------------------------------------------------------------
 /**
- *	微信开放平台PHP-SDK
+ *	微信开放平台PHP-SDK,适配thinkphp 5 框架
  *  @author  UCT <admin@uctoo.com>
  *  @link https://git.oschina.net/uctoo/uctoo
  *  @version 1.0
@@ -54,12 +54,11 @@
  *  		);
  *   $result = $weObj->createMenu($newmenu);
  */
-namespace com;
+namespace Uctoo\Wechatopen;
 use app\common\model\WechatApplet;
 
 class TPWechatOpen extends WechatOpen
 {
-
     public function __construct($options)
     {
         parent::__construct($options);
