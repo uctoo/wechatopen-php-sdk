@@ -251,7 +251,7 @@ class Encryptor
      *
      * @throws EncryptionException
      */
-    private function decrypt($encrypted, $appId)
+    public function decrypt($encrypted, $appId)
     {
         try {
             $key = $this->getAESKey();

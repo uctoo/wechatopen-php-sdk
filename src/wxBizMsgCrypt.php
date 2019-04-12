@@ -10,6 +10,9 @@
 // +----------------------------------------------------------------------
 
 namespace Uctoo\Wechatopen;
+
+use Uctoo\Wechatopen\Encryption\Encryptor;
+use Uctoo\Wechatopen\Support\xmlParse;
 /**
  * 对公众平台发送给公众账号的消息加解密示例代码.
  *
@@ -112,7 +115,7 @@ class wxBizMsgCrypt
         $encryptor = new Encryptor($this->appId, $this->token, $this->encodingAesKey);
 
 		//提取密文
-		$xmlparse = new XMLParse;
+		$xmlparse = new xmlParse;
 		$array = $xmlparse->extract($postData);
 
 		$ret = $array[0];
