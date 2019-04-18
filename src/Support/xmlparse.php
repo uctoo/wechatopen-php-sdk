@@ -13,11 +13,11 @@ namespace Uctoo\Wechatopen\Support;
 
 use DOMDocument;
 /**
- * XMLParse class
+ * xmlparse class
  *
  * 提供提取消息格式中的密文及生成回复消息格式的接口.
  */
-class xmlParse
+class xmlparse
 {
 
 	/**

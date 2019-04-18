@@ -12,7 +12,8 @@
 namespace Uctoo\Wechatopen;
 
 use Uctoo\Wechatopen\Encryption\Encryptor;
-use Uctoo\Wechatopen\Support\xmlParse;
+use Uctoo\Wechatopen\Support\xmlparse;
+use Uctoo\Wechatopen\Encryption\SHA1;
 /**
  * 对公众平台发送给公众账号的消息加解密示例代码.
  *
@@ -102,11 +103,10 @@ class wxBizMsgCrypt
 	 * @param $timestamp string 时间戳 对应URL参数的timestamp
 	 * @param $nonce string 随机串，对应URL参数的nonce
 	 * @param $postData string 密文，对应POST请求的数据
-	 * @param &$msg string 解密后的原文，当return返回0时有效
 	 * @param $valid boolean 是否验证签名
 	 * @return int 成功0，失败返回对应的错误码
 	 */
-	public function decryptMsg($msgSignature, $timestamp = null, $nonce, $postData, &$msg, $valid = true)
+	public function decryptMsg($msgSignature, $timestamp = null, $nonce, $postData,$valid = true)
 	{
 		if (strlen($this->encodingAesKey) != 43) {
 			return ErrorCode::$IllegalAesKey;
@@ -115,7 +115,7 @@ class wxBizMsgCrypt
         $encryptor = new Encryptor($this->appId, $this->token, $this->encodingAesKey);
 
 		//提取密文
-		$xmlparse = new xmlParse;
+		$xmlparse = new xmlparse;
 		$array = $xmlparse->extract($postData);
 
 		$ret = $array[0];
@@ -142,22 +142,14 @@ class wxBizMsgCrypt
 
 		$signature = $array[1];
 
-		trace($signature,'decryptMsgsignature');
-        trace($msgSignature,'msgSignature');
         if($valid){
-		if ($signature != $msgSignature) {
-
-			return ErrorCode::$ValidateSignatureError;
-		}
+		    if ($signature != $msgSignature) {
+			    return ErrorCode::$ValidateSignatureError;
+		    }
         }
-		$result = $encryptor->decrypt($encrypt,$msgSignature,$nonce,$timestamp,$valid);
+		$result = $encryptor->decrypt($encrypt,$this->appId);
 
-		if ($result[0] != 0) {
-			return $result[0];
-		}
-		$msg = $result[1];
-
-		return ErrorCode::$OK;
+		return $result;
 	}
 
 }

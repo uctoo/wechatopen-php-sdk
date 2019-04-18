@@ -59,20 +59,21 @@ use app\common\model\WechatApplet;
 
 class TPWechatOpen extends WechatOpen
 {
-    public function __construct($options)
+    public function __construct($options = '')
     {
         parent::__construct($options);
-
-        $model = model('mpopen');
-        $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
-        $options['token'] = $component['token'];
-        $options['component_appid'] = $component['appid'];    //初始化options信息
-        $options['component_appsecret'] = $component['appsecret'];
-        $options['component_access_token'] = $component['component_access_token'];
-        $options['encodingaeskey'] = $component['encodingAesKey'];
-        $options['debug'] = config('app_debug');            //调试状态跟随系统调试状态
-        if($options['debug']){
-            $options['logcallback'] = 'trace';              //微信类调试信息用trace方法记录到TP日志文件中
+        if($options == ''){
+            $model = model('mpopen');
+            $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
+            $options['token'] = $component['token'];
+            $options['component_appid'] = $component['appid'];    //初始化options信息
+            $options['component_appsecret'] = $component['appsecret'];
+            $options['component_access_token'] = $component['component_access_token'];
+            $options['encodingaeskey'] = $component['encodingAesKey'];
+            $options['debug'] = config('app_debug');            //调试状态跟随系统调试状态
+            if($options['debug']){
+                $options['logcallback'] = 'trace';              //微信类调试信息用trace方法记录到TP日志文件中
+            }
         }
 
         $this->token = isset($options['token'])?$options['token']:'';

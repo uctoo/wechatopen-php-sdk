@@ -2594,7 +2594,7 @@ class WechatOpen
 	public function getTags($appid='', $authorizer_refresh_token='')
 	{
         if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
-		$result = $this->http_post(self::API_URL_PREFIX.self::TAGS_GET_URL.'access_token='.$this->access_token);
+		$result = $this->http_get(self::API_URL_PREFIX.self::TAGS_GET_URL.'access_token='.$this->access_token);
 		if ($result)
 		{
 			$json = json_decode($result,true);
