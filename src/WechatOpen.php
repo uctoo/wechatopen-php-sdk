@@ -359,10 +359,10 @@ class WechatOpen
 	 */
 	private function checkSignature($str='')
 	{
-        $signature = isset($_GET["signature"])?$_GET["signature"]:'';
-	    $signature = isset($_GET["msg_signature"])?$_GET["msg_signature"]:$signature; //如果存在加密验证则用加密验证段
-        $timestamp = isset($_GET["timestamp"])?$_GET["timestamp"]:'';
-        $nonce = isset($_GET["nonce"])?$_GET["nonce"]:'';
+        $signature = isset($_GET['signature'])?$_GET['signature']:'';
+	    $signature = isset($_GET['msg_signature'])?$_GET['msg_signature']:$signature; //如果存在加密验证则用加密验证段
+        $timestamp = isset($_GET['timestamp'])?$_GET['timestamp']:'';
+        $nonce = isset($_GET['nonce'])?$_GET['nonce']:'';
 
 		$token = $this->token;
 		$tmpArr = array($token, $timestamp, $nonce,$str);
@@ -385,9 +385,9 @@ class WechatOpen
     {
         $encryptStr="";
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
-            $postStr = file_get_contents("php://input");
+            $postStr = file_get_contents('php://input');
             $array = (array)simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
-            $this->encrypt_type = isset($_GET["encrypt_type"]) ? $_GET["encrypt_type"]: '';
+            $this->encrypt_type = isset($_GET['encrypt_type']) ? $_GET['encrypt_type']: '';
             if ($this->encrypt_type == 'aes') { //aes加密
                 $this->log($postStr);
             	$encryptStr = $array['Encrypt'];
@@ -406,8 +406,8 @@ class WechatOpen
             } else {
                 $this->postxml = $postStr;
             }
-        } elseif (isset($_GET["echostr"])) {
-        	$echoStr = $_GET["echostr"];
+        } elseif (isset($_GET['echostr'])) {
+        	$echoStr = $_GET['echostr'];
         	if ($return) {
         		if ($this->checkSignature())
         			return $echoStr;
@@ -432,9 +432,9 @@ class WechatOpen
 
 //解密信息
 	public function decrypt_msg($valid = true){
-		$timeStamp = $_GET("timestamp");
-		$nonce = strval($_GET("nonce"));
-		$msg_sign = strval($_GET("msg_signature"));
+		$timeStamp = $_GET('timestamp');
+		$nonce = strval($_GET('nonce'));
+		$msg_sign = strval($_GET('msg_signature'));
 		$text = strval(file_get_contents('php://input'));
 		$res = $this::decrypt($timeStamp,$nonce,$msg_sign,$text,$valid);
 		$this->_receive = $res;
@@ -484,7 +484,7 @@ class WechatOpen
 	public function getRev()
 	{
 		if ($this->_receive) return $this;
-		$postStr = !empty($this->postxml)?$this->postxml:file_get_contents("php://input");
+		$postStr = !empty($this->postxml)?$this->postxml:file_get_contents('php://input');
 		//兼顾使用明文又不想调用valid()方法的情况
 		$this->log($postStr);
 		if (!empty($postStr)) {
