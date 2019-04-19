@@ -46,6 +46,7 @@
  *   $result = $weObj->createMenu($newmenu);
  */
 namespace Uctoo\Wechatopen;
+use Uctoo\Wechatopen\Encryption\Encryptor;
 
 class WechatOpen
 {
@@ -432,9 +433,9 @@ class WechatOpen
 
 //解密信息
 	public function decrypt_msg($valid = true){
-		$timeStamp = $_GET('timestamp');
-		$nonce = strval($_GET('nonce'));
-		$msg_sign = strval($_GET('msg_signature'));
+		$timeStamp = $_GET['timestamp'];
+		$nonce = strval($_GET['nonce']);
+		$msg_sign = strval($_GET['msg_signature']);
 		$text = strval(file_get_contents('php://input'));
 		$res = $this::decrypt($timeStamp,$nonce,$msg_sign,$text,$valid);
 		$this->_receive = $res;
@@ -5940,11 +5941,11 @@ class WechatOpen
         $msg = '';
         $errCode = $pc->decryptMsg($msg_sign, $timeStamp, $nonce, $text, $msg,$valid);
 
-        if ($errCode == 0) {
-            return (array)simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA) ;
-        } else {
-            return $errCode ;
-        }
+      //  if ($errCode == 0) {
+            return (array)simplexml_load_string($errCode, 'SimpleXMLElement', LIBXML_NOCDATA) ;
+      //  } else {
+      //      return $errCode ;
+      //  }
 
     }
 }
