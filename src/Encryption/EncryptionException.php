@@ -20,6 +20,7 @@
  */
 
 namespace Uctoo\Wechatopen\Encryption;
+
 use Exception;
 /**
  * Class EncryptionException.

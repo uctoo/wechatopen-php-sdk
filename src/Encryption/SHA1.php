@@ -10,6 +10,7 @@
 // +----------------------------------------------------------------------
 
 namespace Uctoo\Wechatopen\Encryption;
+
 use Uctoo\Wechatopen\ErrorCode;
 /**
  * SHA1 class

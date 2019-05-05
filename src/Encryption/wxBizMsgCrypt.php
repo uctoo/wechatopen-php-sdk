@@ -9,7 +9,7 @@
 // | Author: Patrick <contact@uctoo.com>
 // +----------------------------------------------------------------------
 
-namespace Uctoo\Wechatopen;
+namespace Uctoo\Wechatopen\Encryption;
 
 use Uctoo\Wechatopen\Encryption\Encryptor;
 use Uctoo\Wechatopen\Support\xmlparse;

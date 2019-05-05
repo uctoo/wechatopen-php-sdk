@@ -47,6 +47,7 @@
  */
 namespace Uctoo\Wechatopen;
 use Uctoo\Wechatopen\Encryption\Encryptor;
+use Uctoo\Wechatopen\Encryption\wxBizMsgCrypt;
 
 class WechatOpen
 {
