@@ -14,6 +14,7 @@ namespace Uctoo\Wechatopen\Encryption;
 use Uctoo\Wechatopen\Encryption\Encryptor;
 use Uctoo\Wechatopen\Support\xmlparse;
 use Uctoo\Wechatopen\Encryption\SHA1;
+use Uctoo\Wechatopen\ErrorCode;
 /**
  * 对公众平台发送给公众账号的消息加解密示例代码.
  *
