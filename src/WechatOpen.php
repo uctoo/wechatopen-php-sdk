@@ -1,9 +1,10 @@
 <?php
 /**
- *	微信开放平台PHP-SDK
- *  @author  UCT <admin@uctoo.com>
- *  @link https://git.oschina.net/uctoo/uctoo
+ *	微信开放平台PHP-SDK， 此类不直接使用，一般需继承此类，根据开发框架适配重载缓存、log、初始化方法后使用。
+ *  @author  UCToo <admin@uctoo.com>
+ *  @link https://github.com/uctoo/wechatopen-php-sdk
  *  @version 1.0
+ *  @license GNU LGPL, version 2.1 or later.
  *  usage:
  *   $options = array(
  *			'token'=>'tokenaccesskey', //填写你设定的key
@@ -40,7 +41,7 @@
  *   		"button"=>
  *   			array(
  *   				array('type'=>'click','name'=>'最新消息','key'=>'MENU_KEY_NEWS'),
- *   				array('type'=>'view','name'=>'我要搜索','url'=>'http://www.baidu.com'),
+ *   				array('type'=>'view','name'=>'我要购物','url'=>'https://www.weiyoho.com'),
  *   				)
  *  		);
  *   $result = $weObj->createMenu($newmenu);

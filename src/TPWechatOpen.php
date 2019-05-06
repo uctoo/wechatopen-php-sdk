@@ -11,7 +11,7 @@
 /**
  *	微信开放平台PHP-SDK,适配thinkphp 5 框架
  *  @author  UCT <admin@uctoo.com>
- *  @link https://git.oschina.net/uctoo/uctoo
+ *  @link https://github.com/uctoo/wechatopen-php-sdk
  *  @version 1.0
  *  usage:
  *   $options = array(
