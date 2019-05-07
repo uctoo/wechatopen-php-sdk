@@ -12,7 +12,7 @@ php sdk for wechat open platform.
 微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html </br>
 
 ## 目录 
-> **[WechatOpen.php 官方API类库](#user-content-1-wechatopenclassphp-官方api类库)**  
+> **[WechatOpen.php 官方API类库](#user-content-1-WechatOpenphp-官方api类库)**  
 > **[TPWechatOpen.php SDK适配ThinkPHP5类库](#user-content-6-tpwechatopenclassphp-SDK适配ThinkPHP5类库)**  
 > **[errCode.php 全局返回码类](#user-content-5-errcodephp-全局返回码类)**  
 
