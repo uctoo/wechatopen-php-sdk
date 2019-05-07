@@ -7,9 +7,9 @@ php sdk for wechat open platform.
 
 ## 知识准备
 使用前请先查看微信公众平台、微信开放平台、微信支付官方文档：  
-微信公众平台： http://mp.weixin.qq.com/wiki/
-微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&lang=zh_CN
-微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html
+微信公众平台： http://mp.weixin.qq.com/wiki/ 
+微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&lang=zh_CN 
+微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html 
 
 ## 目录 
 > **[WechatOpen.php 官方API类库](#user-content-1-wechatopenclassphp-官方api类库)**  
