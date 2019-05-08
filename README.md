@@ -40,6 +40,7 @@ $ composer require uctoo/wechatopen:dev-master
 调用官方API，具有更灵活的消息分类响应方式，支持链式调用操作 ； 
 
 ### 主要功能 
+#### 微信公众号
 - 接入验证 **（初级权限）**
 - 自动回复（文本、图片、语音、视频、音乐、图文） **（初级权限）**
 - 菜单操作（查询、创建、删除） **（菜单权限）**
@@ -64,6 +65,11 @@ $ composer require uctoo/wechatopen:dev-master
 > 认证权限：分为订阅号、服务号认证，如前缀服务号则仅认证的服务号有此权限，否则为认证后的订阅号、服务号都有此权限  
 > 支付权限：仅认证后的服务号可以申请此权限  
 
+#### 微信小程序
+- 小程序相关接口
+
+#### 微信开放平台
+- 微信开放平台相关接口
 
 ### 初始化动作 
 ```php
@@ -77,6 +83,7 @@ $ composer require uctoo/wechatopen:dev-master
    $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid
    $weObj->setAuthorizerRefreshToken($authorizer_refresh_token);         //授权到第三方平台的公众号/小程序 authorizer_refresh_token
 ```
+<font color=red size=5>设置了appid和authorizer_refresh_token后，多数主动接口方法可以不用再传入这两个参数，checkAuth方法会检测当前所设置的公众号/小程序接口调用凭据是否有效。</font>
 
 ### 被动接口方法:   
 * valid() 验证连接，被动接口处于加密模式时必须调用
@@ -155,15 +162,54 @@ const EVENT_CARD_PASS = 'card_pass_check';          //卡券 - 审核通过
 const EVENT_CARD_NOTPASS = 'card_not_pass_check';   //卡券 - 审核未通过
 const EVENT_CARD_USER_GET = 'user_get_card';        //卡券 - 用户领取卡券
 const EVENT_CARD_USER_DEL = 'user_del_card';        //卡券 - 用户删除卡券
+///微信小程序相关接口
+const WXAPP_SESSION_URL = '/sns/jscode2session?';
+const WXAPP_MODIFY_DOMAIN = '/wxa/modify_domain?';   //修改服务器地址。需要先将域名登记到第三方平台的小程序服务器域名中，才可以调用接口进行配置
+const WXAPP_SETWEBVIEW_DOMAIN = '/wxa/setwebviewdomain?';   //设置小程序业务域名（仅供第三方代小程序调用）
+const WXAPP_BIND_TESTER = '/wxa/bind_tester?';       //1、绑定微信用户为小程序体验者
+const WXAPP_UNBIND_TESTER = '/wxa/unbind_tester?';   //2、解除绑定小程序的体验者
+const WXAPP_COMMIT = '/wxa/commit?';          //1、为授权的小程序帐号上传小程序代码
+const WXAPP_GET_QRCODE = '/wxa/get_qrcode?';          //2、获取体验小程序的体验二维码
+const WXAPP_GET_CATEGORY = '/wxa/get_category?';          //3、获取授权小程序帐号的可选类目
+const WXAPP_GET_PAGE = '/wxa/get_page?';          //4、获取小程序的第三方提交代码的页面配置（仅供第三方开发者代小程序调用）
+const WXAPP_SUBMIT_AUDIT = '/wxa/submit_audit?';          //5、将第三方提交的代码包提交审核（仅供第三方开发者代小程序调用）
+const WXAPP_GET_AUDITSTATUS = '/wxa/get_auditstatus?';          //7、获取第三方提交的审核版本的审核状态（仅供第三方代小程序调用）
+const WXAPP_GET_LATESTAUDITSTATUS = '/wxa/get_latest_auditstatus?';          //7、获取第三方提交的审核版本的审核状态（仅供第三方代小程序调用）
+const WXAPP_RELEASE = '/wxa/release?';          //9、发布已通过审核的小程序（仅供第三方代小程序调用）
+const WXAPP_CHANGE_VISITSTATUS = '/wxa/change_visitstatus?';          //10、修改小程序线上代码的可见状态（仅供第三方代小程序调用）
+const WXAPP_CODE_UNLIMIT = '/wxa/getwxacodeunlimit?';             //获取数量不受限的小程序二维码
+///文档省略几百行，具体请参考源码
+///微信开放平台相关接口
+const WXOPEN_CLEAR = '/clear_quota?';   //公众号调用或第三方代公众号调用对公众号的所有API调用（包括第三方代公众号调用）次数进行清零
+const WXOPEN_COMPONENT_CLEAR = '/component/clear_quota?';   //第三方平台对其所有API调用次数清零（只与第三方平台相关，与公众号无关，接口如api_component_token）
+const WXOPEN_COMPONENT_ACCESS_TOKEN = '/component/api_component_token?';
+const WXOPEN_COMPONENT_PREAUTHCODE = '/component/api_create_preauthcode?';
+const WXOPEN_AUTHORIZATION_INFO = '/component/api_query_auth?';
+const WXOPEN_AUTHORIZER_TOKEN = '/component/api_authorizer_token?';
+const WXOPEN_AUTHORIZER_INFO = '/component/api_get_authorizer_info?';
+const WXOPEN_GET_AUTHORIZER_OPTION = '/component/api_get_authorizer_option?';
+const WXOPEN_SET_AUTHORIZER_OPTION = '/component/api_set_authorizer_option?';
+const WXAPP_COMPONENT_SESSION_URL = '/sns/component/jscode2session?';   //
+
+//微信企业支付提现
+const WXAPP_TRANSFERS_URL = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers';
+//微信退款接口
+const WXAPP_REFUND_URL = 'https://api.mch.weixin.qq.com/secapi/pay/refund';
+
+//微信下发小程序和公众号统一的服务消息
+const WX_SEND_UNIFORM_MESSAGE = '/message/wxopen/template/uniform_send?';
+//微信下发公众号订阅消息
+const WX_SUBSCRIBE_MESSAGE = '/mp/subscribemsg?';  //TODO::第一步：需要用户同意授权，获取一次给用户推送一条订阅模板消息的机会
+const WX_TEMPLATE_SUBSCRIBE = '/message/template/subscribe?';  //TODO::第二步：通过API推送订阅模板消息给到授权微信用户
 ```
 
 ### 主动接口方法:   
- *  checkAuth($appid,$appsecret,$token) 此处传入公众后台高级接口提供的appid和appsecret, 或者手动指定$token为access_token。函数将返回access_token操作令牌
+ *  checkAuth($appid='', $authorizer_refresh_token='') 获取（刷新）授权公众号或小程序的接口调用凭据（令牌）,此处传入授权到第三方平台的appid和authorizer_refresh_token。函数将返回access_token操作令牌
  *  resetAuth($appid='') 删除验证数据
  *  resetJsTicket($appid='') 删除JSAPI授权TICKET
- *  getJsTicket($appid='',$jsapi_ticket='') 获取JSAPI授权TICKET
- *  getJsSign($url, $timestamp=0, $noncestr='', $appid='') 获取JsApi使用签名信息数组，可只提供url地址 
- *  createMenu($data) 创建菜单 $data菜单结构详见 **[自定义菜单创建接口](http://mp.weixin.qq.com/wiki/index.php?title=自定义菜单创建接口)**
+ *  getJsTicket($jsapi_ticket='',$appid='',$authorizer_refresh_token='') 获取JSAPI授权TICKET
+ *  getJsSign($url, $timestamp=0, $noncestr='', $appid='',$authorizer_refresh_token='') 获取JsApi使用签名信息数组，可只提供url地址 
+ *  createMenu(array $data, $appid='', $authorizer_refresh_token='') 创建菜单 $data菜单结构详见 **[自定义菜单创建接口](http://mp.weixin.qq.com/wiki/index.php?title=自定义菜单创建接口)**
  *  getServerIp() 获取微信服务器IP地址列表 返回数组array('127.0.0.1','127.0.0.1')
  *  getMenu() 获取菜单 
  *  deleteMenu() 删除菜单 
@@ -283,3 +329,4 @@ const EVENT_CARD_USER_DEL = 'user_del_card';        //卡券 - 用户删除卡�
  *  getShakeInfoShakeAroundUser($ticket) 获取摇周边的设备及用户信息
  *  deviceShakeAroundStatistics($device_id,$begin_date,$end_date,$uuid='',$major=0,$minor=0) 以设备为维度的数据统计接口
  *  pageShakeAroundStatistics($page_id,$begin_date,$end_date) 以页面为维度的数据统计接口
+ 
