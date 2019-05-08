@@ -83,7 +83,7 @@ $ composer require uctoo/wechatopen:dev-master
    $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid
    $weObj->setAuthorizerRefreshToken($authorizer_refresh_token);         //授权到第三方平台的公众号/小程序 authorizer_refresh_token
 ```
-<font color=red size=5>设置了appid和authorizer_refresh_token后，多数主动接口方法可以不用再传入这两个参数，checkAuth方法会检测当前所设置的公众号/小程序接口调用凭据是否有效。</font>
+**设置了appid和authorizer_refresh_token后，多数主动接口方法可以不用再传入这两个参数，checkAuth方法会检测当前所设置的公众号/小程序接口调用凭据是否有效。**
 
 ### 被动接口方法:   
 * valid() 验证连接，被动接口处于加密模式时必须调用
@@ -329,4 +329,29 @@ const WX_TEMPLATE_SUBSCRIBE = '/message/template/subscribe?';  //TODO::第二步
  *  getShakeInfoShakeAroundUser($ticket) 获取摇周边的设备及用户信息
  *  deviceShakeAroundStatistics($device_id,$begin_date,$end_date,$uuid='',$major=0,$minor=0) 以设备为维度的数据统计接口
  *  pageShakeAroundStatistics($page_id,$begin_date,$end_date) 以页面为维度的数据统计接口
- 
+ *  
+ *  微信小程序接口：
+ *  getWxappSession($js_code,$appid='',$authorizer_refresh_token='') 获取微信小程序session
+ *  wxaModifyDomain($action,$requestdomain='',$wsrequestdomain='',$uploaddomain='',$downloaddomain='',$appid='', $authorizer_refresh_token='') 微信小程序修改服务器地址
+ *  wxaSetWebviewDomain($action,$webviewdomain='',$appid='', $authorizer_refresh_token='') 微信小程序设置小程序业务域名（仅供第三方代小程序调用）
+ *  wxaBindTester($wechatid,$appid='', $authorizer_refresh_token='') 绑定微信用户为小程序体验者
+ *  wxaUnbindTester($wechatid,$appid='', $authorizer_refresh_token='') 解除绑定小程序的体验者
+ *  wxaCommit($template_id, $ext_json, $user_version,$user_desc,$appid='', $authorizer_refresh_token='' ) 为授权的小程序帐号上传小程序代码
+ *  wxaGetQrcode($appid='', $authorizer_refresh_token='') 获取体验小程序的体验二维码（仅供第三方开发者代小程序调用）
+ *  wxaGetCategory($appid='', $authorizer_refresh_token='') 获取授权小程序帐号的可选类目
+ *  wxaGetPage($appid='', $authorizer_refresh_token='') 获取小程序的第三方提交代码的页面配置（仅供第三方开发者代小程序调用）
+ *  wxaSubmitAudit($item_list,$appid='', $authorizer_refresh_token='' ) 将第三方提交的代码包提交审核（仅供第三方开发者代小程序调用）
+ *  wxaGetAuditstatus($auditid,$appid='', $authorizer_refresh_token='' ) 获取第三方提交的审核版本的审核状态（仅供第三方代小程序调用）
+ *  wxaGetLatestAuditstatus($appid='', $authorizer_refresh_token='') 查询最新一次提交的审核状态（仅供第三方代小程序调用）
+ *  wxaRelease($appid='', $authorizer_refresh_token='') 发布已通过审核的小程序（仅供第三方代小程序调用）
+ *  wxaChangeVisitstatus($action,$appid='', $authorizer_refresh_token='') 修改小程序线上代码的可见状态（仅供第三方代小程序调用）
+ *  
+ *  微信第三方平台接口：
+ *  getComponentAccessToken($component_verify_ticket) 获取第三方平台component_access_token
+ *  getPreAuthCode() 获取预授权码pre_auth_code
+ *  getPreAuthorizationUrl($callbackUrl,  $authCode = null) 生成授权页url
+ *  getAuthorizationInfo($authorization_code) 使用授权码换取公众号或小程序的接口调用凭据和授权信息
+ *  getAuthorizerInfo($appid) 获取授权方的帐号基本信息
+ *  getAuthorizerOption($appid,$option_name) 获取授权方的选项设置信息
+ *  setAuthorizerOption($appid,$option_name,$option_value) 设置授权方的选项设置信息
+ *  clearQuota($appid='', $authorizer_refresh_token='') 公众号调用或第三方代公众号调用对公众号的所有API调用（包括第三方代公众号调用）次数进行清零
