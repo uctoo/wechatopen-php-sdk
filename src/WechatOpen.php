@@ -5543,12 +5543,12 @@ class WechatOpen
      *   "errmsg": "ok"
      * }
      */
-    public function wxaChangeVisitstatus($access_token, $action){
-        if (!$access_token) return false;
+    public function wxaChangeVisitstatus($action,$appid='', $authorizer_refresh_token=''){
+        if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
 
         $data = array('action' => $action );
 
-        $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXAPP_CHANGE_VISITSTATUS.'access_token='.$access_token, self::json_encode($data));
+        $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXAPP_CHANGE_VISITSTATUS.'access_token='.$this->access_token, self::json_encode($data));
         if ($result)
         {
             $json = json_decode($result,true);
@@ -5690,6 +5690,178 @@ class WechatOpen
         return 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?'.http_build_query($queries);
     }
 
+
+    /**
+     * 使用授权码换取公众号或小程序的接口调用凭据和授权信息
+     *
+     * @param string $authorization_code    //授权码的获取，需要在用户在第三方平台授权页中完成授权流程后，在回调URI中通过URL参数提供给第三方平台方。
+     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
+     * 成功返回结果
+     * {
+     * "authorization_info": {
+     * "authorizer_appid": "wxf8b4f85f3a794e77",
+     * "authorizer_access_token": "QXjUqNqfYVH0yBE1iI_7vuN_9gQbpjfK7hYwJ3P7xOa88a89-Aga5x1NMYJyB8G2yKt1KCl0nPC3W9GJzw0Zzq_dBxc8pxIGUNi_bFes0qM",
+     * "expires_in": 7200,
+     * "authorizer_refresh_token": "dTo-YCXPL4llX-u1W1pPpnp8Hgm4wpJtlR6iV0doKdY",
+     * "func_info": [{"funcscope_category": {"id": 1}}, {"funcscope_category": {"id": 2}}, {"funcscope_category": {"id": 3}}]}
+     */
+    public function getAuthorizationInfo($authorization_code){
+        if (!$authorization_code) return false;
+
+        $data = array(
+            'component_appid'=>$this->component_appid,
+            'authorization_code'=>$authorization_code
+        );
+
+        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZATION_INFO.'component_access_token='.$this->component_access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            $this->access_token = $json['authorization_info']['authorizer_access_token'];
+            
+	   $appid = $json['authorization_info']['authorizer_appid'];
+	   $authname = 'wechat_access_token'.$appid;
+                    
+           $expire = $json['authorization_info']['expires_in'] ? intval($json['authorization_info']['expires_in'])-100 : 7200;
+            $this->setCache($authname,$this->access_token,$expire);
+	    
+	    return $json;
+        }
+        return false;
+    }
+
+    /**
+     * 6、获取授权方的帐号基本信息
+     *
+     * @param string $appid    //授权码的获取，需要在用户在第三方平台授权页中完成授权流程后，在回调URI中通过URL参数提供给第三方平台方。
+     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
+     */
+    public function getAuthorizerInfo($appid){
+        if (!$appid) return false;
+
+        $data = array(
+            'component_appid'=>$this->component_appid,
+            'authorizer_appid'=>$appid
+        );
+
+        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZER_INFO.'component_access_token='.$this->component_access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            return $json;
+        }
+        return false;
+    }
+
+    /**
+     * 7、获取授权方的选项设置信息
+     *
+     * @param string $appid    //授权公众号或小程序的appid
+     * @param string $option_name    //选项名称
+     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
+     */
+    public function getAuthorizerOption($appid,$option_name){
+        if (!$appid) return false;
+        if (!$option_name) return false;
+        $data = array(
+            'component_appid'=>$this->component_appid,
+            'authorizer_appid'=>$appid,
+            'option_name'=>$option_name
+        );
+
+        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_GET_AUTHORIZER_OPTION.'component_access_token='.$this->component_access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            return $json;
+        }
+        return false;
+    }
+
+
+    /**
+     * 7、设置授权方的选项设置信息
+     *
+     * @param string $appid    //授权公众号或小程序的appid
+     * @param string $option_name    //选项名称
+     * @param string $option_value   //选项名称
+     * @return boolean|array         //应用需要自行维护下公众号或小程序的信息
+     */
+    public function setAuthorizerOption($appid,$option_name,$option_value){
+        if (!$appid) return false;
+        if (!$option_name) return false;
+        if (!$option_value) return false;
+        $data = array(
+            'component_appid'=>$this->component_appid,
+            'authorizer_appid'=>$appid,
+            'option_name'=>$option_name,
+            'option_value'=>$option_value
+        );
+
+        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_SET_AUTHORIZER_OPTION.'component_access_token='.$this->component_access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            return $json;
+        }
+        return false;
+    }
+
+    /**
+     * 公众号调用或第三方代公众号调用对公众号的所有API调用（包括第三方代公众号调用）次数进行清零
+     *
+     * @param string $appid     //
+     * @return boolean|array
+     * 成功返回结果
+     * {
+     *   "errcode": 0,
+     *   "errmsg": "ok",
+     * }
+     */
+    public function clearQuota($appid='', $authorizer_refresh_token=''){
+        if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
+        if (!$appid) {
+            $appid = $this->appid;
+        }
+
+        $data = array(
+            'appid'=>$appid
+        );
+        $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXOPEN_CLEAR.'access_token='.$this->access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            return $json;
+        }
+        return false;
+    }
+
+
     /**
      * 生成一次性订阅消息授权页url.
      * @param string      $appid  公众号的唯一标识
@@ -5748,175 +5920,6 @@ class WechatOpen
             'data'=>$data,
         );
         $result = $this->http_post(self::API_URL_PREFIX.self::WX_TEMPLATE_SUBSCRIBE.'access_token='.$this->access_token, self::json_encode($postdata));
-        if ($result)
-        {
-            $json = json_decode($result,true);
-            if (!$json || !empty($json['errcode'])) {
-                $this->errCode = $json['errcode'];
-                $this->errMsg = $json['errmsg'];
-                return false;
-            }
-            return $json;
-        }
-        return false;
-    }
-
-    /**
-     * 使用授权码换取公众号或小程序的接口调用凭据和授权信息
-     *
-     * @param string $authorization_code    //授权码的获取，需要在用户在第三方平台授权页中完成授权流程后，在回调URI中通过URL参数提供给第三方平台方。
-     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
-     * 成功返回结果
-     * {
-     * "authorization_info": {
-     * "authorizer_appid": "wxf8b4f85f3a794e77",
-     * "authorizer_access_token": "QXjUqNqfYVH0yBE1iI_7vuN_9gQbpjfK7hYwJ3P7xOa88a89-Aga5x1NMYJyB8G2yKt1KCl0nPC3W9GJzw0Zzq_dBxc8pxIGUNi_bFes0qM",
-     * "expires_in": 7200,
-     * "authorizer_refresh_token": "dTo-YCXPL4llX-u1W1pPpnp8Hgm4wpJtlR6iV0doKdY",
-     * "func_info": [{"funcscope_category": {"id": 1}}, {"funcscope_category": {"id": 2}}, {"funcscope_category": {"id": 3}}]}
-     */
-    public function getAuthorizationInfo($authorization_code){
-        if (!$authorization_code) return false;
-
-        $data = array(
-            'component_appid'=>$this->component_appid,
-            'authorization_code'=>$authorization_code
-        );
-
-        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZATION_INFO.'component_access_token='.$this->component_access_token, self::json_encode($data));
-        if ($result)
-        {
-            $json = json_decode($result,true);
-            if (!$json || !empty($json['errcode'])) {
-                $this->errCode = $json['errcode'];
-                $this->errMsg = $json['errmsg'];
-                return false;
-            }
-            $this->access_token = $json['authorization_info']['authorizer_access_token'];
-            
-	   $appid = $json['authorization_info']['authorizer_appid'];
-	   $authname = 'wechat_access_token'.$appid;
-                    
-           $expire = $json['authorization_info']['expires_in'] ? intval($json['authorization_info']['expires_in'])-100 : 7200;
-            $this->setCache($authname,$this->access_token,$expire);
-	    
-	    return $json;
-        }
-        return false;
-    }
-
-    /**
-     * 6、获取授权方的帐号基本信息
-     *
-     * @param string $authorizer_appid    //授权码的获取，需要在用户在第三方平台授权页中完成授权流程后，在回调URI中通过URL参数提供给第三方平台方。
-     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
-     */
-    public function getAuthorizerInfo($authorizer_appid){
-        if (!$authorizer_appid) return false;
-
-        $data = array(
-            'component_appid'=>$this->component_appid,
-            'authorizer_appid'=>$authorizer_appid
-        );
-
-        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_AUTHORIZER_INFO.'component_access_token='.$this->component_access_token, self::json_encode($data));
-        if ($result)
-        {
-            $json = json_decode($result,true);
-            if (!$json || !empty($json['errcode'])) {
-                $this->errCode = $json['errcode'];
-                $this->errMsg = $json['errmsg'];
-                return false;
-            }
-            return $json;
-        }
-        return false;
-    }
-
-    /**
-     * 7、获取授权方的选项设置信息
-     *
-     * @param string $appid    //授权公众号或小程序的appid
-     * @param string $option_name    //选项名称
-     * @return boolean|array                //应用需要自行维护下公众号或小程序的信息
-     */
-    public function getAuthorizerOption($appid,$option_name){
-        if (!$appid) return false;
-        if (!$option_name) return false;
-        $data = array(
-            'component_appid'=>$this->component_appid,
-            'authorizer_appid'=>$appid,
-            'option_name'=>$option_name
-        );
-
-        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_GET_AUTHORIZER_OPTION.'component_access_token='.$this->component_access_token, self::json_encode($data));
-        if ($result)
-        {
-            $json = json_decode($result,true);
-            if (!$json || !empty($json['errcode'])) {
-                $this->errCode = $json['errcode'];
-                $this->errMsg = $json['errmsg'];
-                return false;
-            }
-            return $json;
-        }
-        return false;
-    }
-
-
-    /**
-     * 7、获取授权方的选项设置信息
-     *
-     * @param string $appid    //授权公众号或小程序的appid
-     * @param string $option_name    //选项名称
-     * @param string $option_value   //选项名称
-     * @return boolean|array         //应用需要自行维护下公众号或小程序的信息
-     */
-    public function setAuthorizerOption($appid,$option_name,$option_value){
-        if (!$appid) return false;
-        if (!$option_name) return false;
-        if (!$option_value) return false;
-        $data = array(
-            'component_appid'=>$this->component_appid,
-            'authorizer_appid'=>$appid,
-            'option_name'=>$option_name,
-            'option_value'=>$option_value
-        );
-
-        $result = $this->http_post(self::API_URL_PREFIX.self::WXOPEN_SET_AUTHORIZER_OPTION.'component_access_token='.$this->component_access_token, self::json_encode($data));
-        if ($result)
-        {
-            $json = json_decode($result,true);
-            if (!$json || !empty($json['errcode'])) {
-                $this->errCode = $json['errcode'];
-                $this->errMsg = $json['errmsg'];
-                return false;
-            }
-            return $json;
-        }
-        return false;
-    }
-    /**
-     * 公众号调用或第三方代公众号调用对公众号的所有API调用（包括第三方代公众号调用）次数进行清零
-     *
-     * @param string $appid     //
-     * @return boolean|array
-     * 成功返回结果
-     * {
-     *   "errcode": 0,
-     *   "errmsg": "ok",
-     * }
-     */
-    public function clearQuota($appid='', $authorizer_refresh_token=''){
-        if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
-        if (!$appid) {
-            $appid = $this->appid;
-        }
-
-        $data = array(
-            'appid'=>$appid
-        );
-        $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXOPEN_CLEAR.'access_token='.$this->access_token, self::json_encode($data));
         if ($result)
         {
             $json = json_decode($result,true);
