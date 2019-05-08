@@ -18,8 +18,7 @@
  *			'token'=>'tokenaccesskey', //填写你设定的key
  *			'encodingaeskey'=>'encodingaeskey', //填写加密用的EncodingAESKey
  *			'component_appid'=>'wxdk1234567890', //填写第三方平台的appid
- *          'component_appsecret'=>'xxxxxxxxxxxxxxxxxxx', //填写第三方平台的appid
- *			'component_access_token'=>'xxxxxxxxxxxxxxxxxxx' //填写第三方平台的密钥
+ *          'component_appsecret'=>'xxxxxxxxxxxxxxxxxxx' //填写第三方平台的appid
  *		);
  *	 $weObj = new Wechat($options);
  *   $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid

@@ -7,12 +7,12 @@ php sdk for wechat open platform.
 
 ## 知识准备
 使用前请先查看微信公众平台、微信开放平台、微信支付官方文档：  
-微信公众平台： http://mp.weixin.qq.com/wiki/ </br>
-微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&lang=zh_CN </br>
-微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html </br>
+微信公众平台： http://mp.weixin.qq.com/wiki/  
+微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&lang=zh_CN  
+微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html  
 
 ## 目录 
-> **[WechatOpen.php 官方API类库](#user-content-1-WechatOpenphp-官方api类库)**  
+> **[WechatOpen.php 官方API类库](#user-content-1-wechatopenphp-官方api类库)**  
 > **[TPWechatOpen.php SDK适配ThinkPHP5类库](#user-content-6-tpwechatopenclassphp-SDK适配ThinkPHP5类库)**  
 > **[errCode.php 全局返回码类](#user-content-5-errcodephp-全局返回码类)**  
 
