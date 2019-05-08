@@ -35,7 +35,8 @@ $ composer require uctoo/wechatopen:dev-master
 
 ----------
 
-## 1. WechatOpen.php 官方API类库,此类不直接使用，一般需继承此类，根据开发框架适配重载缓存、log、初始化方法后使用。
+## 1. WechatOpen.php 官方API类库
+此类不直接使用，一般需继承此类，根据开发框架适配重载缓存、log、初始化方法后使用。
 调用官方API，具有更灵活的消息分类响应方式，支持链式调用操作 ； 
 
 ### 主要功能 
