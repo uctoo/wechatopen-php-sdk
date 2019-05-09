@@ -719,7 +719,7 @@ QQ群：102324323，使用疑问，开发，贡献代码请加群。
 由于wechat-php-sdk 项目已长期未维护，近年微信生态已增加了很多新的能力，而且自2015年微信推出微信开放平台第三方开发方式以来，第三方开发方式逐渐流行，因此UCToo开发了第三方平台版本的SDK。
 
 ## 捐赠
-如果您觉得wechatopen对您有帮助，欢迎请作者一杯咖啡
+如果觉得wechatopen对你有帮助，欢迎请作者一杯咖啡
 
 ![捐赠wechat](https://gitee.com/uctoo/uctoo/raw/master/Public/images/donate.png)
 
