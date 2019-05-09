@@ -13,7 +13,7 @@ php sdk for wechat open platform.
 
 ## 目录 
 > **[WechatOpen.php 官方API类库](#user-content-1-wechatopenphp-官方api类库)**  
-> **[TPWechatOpen.php SDK适配ThinkPHP5类库](#user-content-6-tpwechatopenclassphp-SDK适配ThinkPHP5类库)**  
+> **[TPWechatOpen.php SDK适配ThinkPHP5类库](##2-tpwechatopenphp-sdk适配ThinkPHP5类库)**  
 > **[errCode.php 全局返回码类](#user-content-5-errcodephp-全局返回码类)**  
 
 ## Requirement 运行要求
@@ -419,7 +419,7 @@ public function wxaCommit($template_id, $ext_json, $user_version,$user_desc,$app
 
 ## 2. TPWechatOpen.php SDK适配ThinkPHP5类库
 严格来说，此类并非只是适配ThinkPHP5框架，而是在 www.weiyoho.com 产品中使用的一个类，因此与应用系统有一定耦合，仅供开发者参考。开发者可根据各自的应用具体情况进行修改。此类主要在初始化时设置第三方平台的参数，以及重写了父类WechatOpen.php的checkAuth、getJsTicket方法以获取正确的授权方authorizer_access_token。
-一般第三方平台需要保存第三方平台以及授权方公众号/小程序的信息，维护第三方平台component_access_token、授权方access_token、jsapi_ticket等变量的生命周期。此类通过数据库对这些信息进行持久化，并且未使用缓存。第三方平台信息表uct_mpopen和微信应用信息表uct_wechat_applet结构如下。
+一般第三方平台需要保存第三方平台信息以及授权方公众号/小程序的信息，维护第三方平台component_access_token、授权方access_token、jsapi_ticket等变量的生命周期。此类通过数据库对这些信息进行持久化，并且未使用缓存。第三方平台信息表uct_mpopen和微信应用信息表uct_wechat_applet结构如下。
 ```sql
 -- ----------------------------
 -- Table structure for uct_mpopen
@@ -529,7 +529,7 @@ QQ群：102324323，使用疑问，开发，贡献代码请加群。
 ## 捐赠
 如果您觉得wechatopen对您有帮助，欢迎请作者一杯咖啡
 
-![捐赠wechat]( .png)
+![捐赠wechat](https://gitee.com/uctoo/uctoo/raw/master/Public/images/donate.png)
 
 License
 -------
