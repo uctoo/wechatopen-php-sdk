@@ -83,7 +83,7 @@ $ composer require uctoo/wechatopen:dev-master
    $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid
    $weObj->setAuthorizerRefreshToken($authorizer_refresh_token);         //授权到第三方平台的公众号/小程序 authorizer_refresh_token
 ```
-**设置了appid和authorizer_refresh_token后，多数主动接口方法可以不用再传入这两个参数，checkAuth方法会检测当前所设置的公众号/小程序接口调用凭据是否有效。**
+**设置了appid和authorizer_refresh_token后，多数主动接口方法在不更换授权方的场景下可以不用再传入这两个参数，checkAuth方法会检测当前所设置的公众号/小程序接口调用凭据access_token是否有效。**
 
 ### 被动接口方法:   
 * valid() 验证连接，被动接口处于加密模式时必须调用
@@ -201,6 +201,36 @@ const WX_SEND_UNIFORM_MESSAGE = '/message/wxopen/template/uniform_send?';
 //微信下发公众号订阅消息
 const WX_SUBSCRIBE_MESSAGE = '/mp/subscribemsg?';  //TODO::第一步：需要用户同意授权，获取一次给用户推送一条订阅模板消息的机会
 const WX_TEMPLATE_SUBSCRIBE = '/message/template/subscribe?';  //TODO::第二步：通过API推送订阅模板消息给到授权微信用户
+```
+
+### 变量列表：
+```php
+    protected $token;
+    protected $encodingAesKey;
+    protected $encrypt_type;
+    protected $appid;                            //公众号或小程序的
+    protected $appsecret;                        //公众号或小程序的，授权到第三方平台后，一般此值为空
+    protected $authorizer_refresh_token;         //公众号或小程序的刷新令牌，只会在授权时刻提供，请妥善保存
+    protected $component_appid;                  //第三方平台的，初始化时必填
+    protected $component_appsecret;              //第三方平台的，初始化时必填
+    protected $access_token;                     //即authorizer_access_token，公众号或小程序的接口调用凭据,应用维护各授权公众号的access_token,一般由checkAuth方法自动设置
+    protected $component_access_token;           //第三方平台自己的接口调用凭据,第三方最好自行保存，初始化时必填，并在收到component_verify_ticket消息时及时更新
+    protected $pre_auth_code;                    //第三方平台预授权码
+    protected $jsapi_ticket;
+    protected $api_ticket;
+    protected $user_token;
+    protected $partnerid;
+    protected $partnerkey;
+    protected $paysignkey;
+    protected $postxml;
+    protected $_msg;
+    protected $_funcflag = false;
+    protected $_receive;
+    protected $_text_filter = true;
+    public $debug =  false;
+    public $errCode = 40001;
+    public $errMsg = "no access";
+    public $logcallback;
 ```
 
 ### 主动接口方法:   
@@ -329,7 +359,7 @@ const WX_TEMPLATE_SUBSCRIBE = '/message/template/subscribe?';  //TODO::第二步
  *  getShakeInfoShakeAroundUser($ticket) 获取摇周边的设备及用户信息
  *  deviceShakeAroundStatistics($device_id,$begin_date,$end_date,$uuid='',$major=0,$minor=0) 以设备为维度的数据统计接口
  *  pageShakeAroundStatistics($page_id,$begin_date,$end_date) 以页面为维度的数据统计接口
- *  
+ *  //方法太多请参考源码
  *  微信小程序接口：
  *  getWxappSession($js_code,$appid='',$authorizer_refresh_token='') 获取微信小程序session
  *  wxaModifyDomain($action,$requestdomain='',$wsrequestdomain='',$uploaddomain='',$downloaddomain='',$appid='', $authorizer_refresh_token='') 微信小程序修改服务器地址
@@ -355,3 +385,153 @@ const WX_TEMPLATE_SUBSCRIBE = '/message/template/subscribe?';  //TODO::第二步
  *  getAuthorizerOption($appid,$option_name) 获取授权方的选项设置信息
  *  setAuthorizerOption($appid,$option_name,$option_value) 设置授权方的选项设置信息
  *  clearQuota($appid='', $authorizer_refresh_token='') 公众号调用或第三方代公众号调用对公众号的所有API调用（包括第三方代公众号调用）次数进行清零
+
+### 扩展规约
+如要添加此类未包含的接口，请参考如下规约，主动接口方法以wxaCommit为例：
+1. 方法名尽量与微信API地址的方法名一致。
+2. 授权方$appid='', $authorizer_refresh_token='' 参数在参数列表最后。
+3. 用checkAuth方法检测授权方access_token有效性。
+4. 在预定义常量列表代码段添加微信API地址常量。
+5. 按微信API接口http请求方式post或get访问微信API。
+```php
+public function wxaCommit($template_id, $ext_json, $user_version,$user_desc,$appid='', $authorizer_refresh_token='' ){
+        if (!$this->access_token && !$this->checkAuth($appid ,$authorizer_refresh_token)) return false;
+        $data = array(
+            'template_id'=>$template_id,
+            'ext_json'=>$ext_json,
+            'user_version'=>$user_version,
+            'user_desc'=>$user_desc
+        );
+        $result = $this->http_post(self::API_BASE_URL_PREFIX.self::WXAPP_COMMIT.'access_token='.$this->access_token, self::json_encode($data));
+        if ($result)
+        {
+            $json = json_decode($result,true);
+            if (!$json || !empty($json['errcode'])) {
+                $this->errCode = $json['errcode'];
+                $this->errMsg = $json['errmsg'];
+                return false;
+            }
+            return $json;
+        }
+        return false;
+    }
+```
+
+## 2. TPWechatOpen.php SDK适配ThinkPHP5类库
+严格来说，此类并非只是适配ThinkPHP5框架，而是在 www.weiyoho.com 产品中使用的一个类，因此与应用系统有一定耦合，仅供开发者参考。开发者可根据各自的应用具体情况进行修改。此类主要在初始化时设置第三方平台的参数，以及重写了父类WechatOpen.php的checkAuth、getJsTicket方法以获取正确的授权方authorizer_access_token。
+一般第三方平台需要保存第三方平台以及授权方公众号/小程序的信息，维护第三方平台component_access_token、授权方access_token、jsapi_ticket等变量的生命周期。此类通过数据库对这些信息进行持久化，并且未使用缓存。第三方平台信息表uct_mpopen和微信应用信息表uct_wechat_applet结构如下。
+```sql
+-- ----------------------------
+-- Table structure for uct_mpopen
+-- ----------------------------
+DROP TABLE IF EXISTS `uct_mpopen`;
+CREATE TABLE `uct_mpopen` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `appid` varchar(255) NOT NULL COMMENT 'appid',
+  `appsecret` varchar(255) NOT NULL COMMENT 'appsecret',
+  `encodingAesKey` varchar(43) NOT NULL COMMENT 'encodingAesKey',
+  `component_verify_ticket` varchar(255) NOT NULL COMMENT 'component_verify_ticket',
+  `component_access_token` varchar(255) NOT NULL COMMENT 'component_access_token',
+  `token_overtime` int(15) NOT NULL COMMENT 'token过期时间',
+  `pre_auth_code` varchar(255) NOT NULL COMMENT '预授权码',
+  `pre_code_overtime` int(15) NOT NULL COMMENT '预授权过期时间',
+  `status` int(2) NOT NULL,
+  `token` varchar(255) NOT NULL COMMENT 'token',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='微信开放平台表';
+
+-- ----------------------------
+-- Records of uct_mpopen
+-- ----------------------------
+INSERT INTO `uct_mpopen` VALUES ('1', 'wx37......', '5e6......', 'p9......', 'ticket@@@Cp......', '20_Yx......', '1556441737', '1', '1516880730', '1', 'uctoo');
+
+-- ----------------------------
+-- Table structure for uct_wechat_applet
+-- ----------------------------
+DROP TABLE IF EXISTS `uct_wechat_applet`;
+CREATE TABLE `uct_wechat_applet` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `admin_id` int(10) NOT NULL COMMENT '管理员ID',
+  `appletid` varchar(50) NOT NULL COMMENT '微应用标识',
+  `name` varchar(100) NOT NULL DEFAULT '' COMMENT '应用名称',
+  `typedata` enum('serv_account','miniapp','sub_account') NOT NULL DEFAULT 'serv_account' COMMENT '应用类型:serv_account=服务号,miniapp=小程序,sub_account=订阅号',
+  `token` varchar(100) NOT NULL DEFAULT '' COMMENT 'Token',
+  `appid` varchar(255) NOT NULL DEFAULT '' COMMENT 'AppID',
+  `appsecret` varchar(255) DEFAULT NULL COMMENT 'AppSecret',
+  `mp_appid` varchar(255) DEFAULT '' COMMENT '公众号 AppID',
+  `mp_appsecret` varchar(255) DEFAULT NULL COMMENT '公众号 AppSecret',
+  `aeskey` varchar(255) DEFAULT NULL COMMENT 'EncodingAESKey',
+  `mchid` varchar(50) DEFAULT NULL COMMENT '商户号',
+  `mchkey` varchar(50) DEFAULT NULL COMMENT '商户支付密钥',
+  `mch_api_cert` varchar(255) DEFAULT NULL COMMENT '商户API证书cert',
+  `mch_api_key` varchar(255) DEFAULT NULL COMMENT '商户API证书key',
+  `notify_url` varchar(255) DEFAULT NULL COMMENT '微信支付异步通知',
+  `principal` varchar(100) DEFAULT NULL COMMENT '主体名称',
+  `original` varchar(50) DEFAULT NULL COMMENT '原始ID',
+  `wechat` varchar(50) DEFAULT NULL COMMENT '微信号',
+  `headface_image` varchar(255) DEFAULT NULL COMMENT '头像',
+  `qrcode_image` varchar(255) DEFAULT NULL COMMENT '二维码图片',
+  `signature` text COMMENT '账号介绍',
+  `city` varchar(50) DEFAULT NULL COMMENT '省市',
+  `state` enum('enable','disable','unaudit') NOT NULL DEFAULT 'enable' COMMENT '状态:enable=启用,disable=禁用,unaudit=未审核',
+  `createtime` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
+  `updatetime` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '更新时间',
+  `deletetime` int(10) unsigned DEFAULT NULL COMMENT '删除时间',
+  `weigh` int(10) NOT NULL DEFAULT '0' COMMENT '权重',
+  `service_type_info` char(10) NOT NULL DEFAULT '0' COMMENT '授权方公众号类型，0代表订阅号/小程序，1代表由历史老帐号升级后的订阅号，2代表服务号',
+  `verify_type_info` char(10) NOT NULL DEFAULT '0' COMMENT '授权方认证类型，-1代表未认证，0代表微信认证，1代表新浪微博认证，2代表腾讯微博认证，3代表已资质认证通过但还未通过名称认证，4代表已资质认证通过、还未通过名称认证，但通过了新浪微博认证，5代表已资质认证通过、还未通过名称认证，但通过了腾讯微博认证',
+  `business_info` text COMMENT '用以了解公众号功能的开通状况',
+  `authorizer_access_token` varchar(255) DEFAULT NULL,
+  `access_token_overtime` int(15) DEFAULT NULL,
+  `authorizer_refresh_token` varchar(255) DEFAULT NULL,
+  `miniprograminfo` text COMMENT '小程序信息',
+  `func_info` text COMMENT '公众号授权给开发者的权限集列表',
+  `ticket` varchar(100) DEFAULT '' COMMENT 'jsapi ticket',
+  `ticket_overtime` int(15) DEFAULT NULL COMMENT 'jsapi ticket 过期时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COMMENT='微应用表';
+
+-- ----------------------------
+-- Records of uct_wechat_applet
+-- ----------------------------
+INSERT INTO `uct_wechat_applet` VALUES ('1', '1', '9d......', '微信扫码登录网站', '', '', 'wx......', '3e74......', '', '', '', '', '', '', '', null, '', '', '', '', '', '', '', 'enable', '1532017642', '1552391630', null, '1', '0', '0', null, null, null, null, null, null, '', null);
+INSERT INTO `uct_wechat_applet` VALUES ('2', '1', '867e......', '优创...', 'serv_account', '', 'wx2......', '', '', '', '', '1228598202', '......', '', '', null, '深圳优创......', 'gh_1d......', 'UCToo_com', 'http://wx.qlo......', 'htt......', null, '', 'enable', '1532018545', '1556329683', null, '2', '{\"id\":2}', '{\"id\":0}', '{\"open_pay\":1,\"open_shake\":0,\"open_scan\":0,\"open_card\":1,\"open_store\":1}', '20_RWV......', '1556336783', 'refreshtoken@@@......', null, '......', 'U3N......', '1547815763');
+INSERT INTO `uct_wechat_applet` VALUES ('3', '2', '722......', '微友货', 'miniapp', '', 'wx40......', 'c0e3......', 'wx2......', '', '', '1228598202', '......', '......pem', '.......pem', null, '深圳优创......', 'gh_e65......', '', 'http://wx.qlogo.cn/m......', 'http://mmbiz.qpic.cn/mmbiz......', '......', '', 'enable', '1532024934', '1556431274', null, '3', '{\"id\":0}', '{\"id\":0}', '{\"open_pay\":1,\"open_shake\":0,\"open_scan\":0,\"open_card\":0,\"open_store\":0}', '20_i......', '1556438374', 'refreshtoken@@@B......', '{\"network\":{\"RequestDomain\":[\"https:\\/\\/www.weiyoho.com\"......', '', null);
+```
+uct_mpopen表需要填写appid、appsecret、encodingAesKey、token字段，正确配置和已通过全网发布的第三方平台，uct_mpopen表其他字段会自动更新。uct_wechat_applet表的数据一般是通过公众号管理员扫码授权帐号时添加。扫码授权的应用appsecret字段为空，authorizer_access_token字段会自动更新，有更好的安全性。网站应用、APP应用等无法扫码授权的，可以人工添加，一般需要填写appsecret字段。
+
+### 使用方法 
+```php
+   //被动接口
+   $this->weObj = new TPWechatOpen();
+   $appid = input('appid');
+   $this->weObj->setAppid($appid);
+   $appinfo = WechatApplet::get(['appid'=>$appid]);   //取公众号信息，系统用数据库在维护access_token等有效期，不加缓存
+   $this->weObj->setAuthorizerRefreshToken($appinfo['authorizer_refresh_token']);
+   $this->weObj->decrypt_msg(false);                  //TODO:传参不验核签名signature，解密算法有点问题
+   $this->weObj->getRev();
+   $data = $this->weObj->getRevData();
+   $type = $this->weObj->getRevType();
+   $ToUserName = $this->weObj->getRevTo();
+   $FromUserName = $this->weObj->getRevFrom();
+   
+   //主动接口
+   $weObj->wxaCommit($wxapptemplate->template_id, $wxapptemplate->ext_json, $wxapptemplate->user_version, $wxapptemplate->user_desc,$appinfo['appid'], $appinfo['authorizer_refresh_token']);
+```
+
+## 交流群
+QQ群：102324323，使用疑问，开发，贡献代码请加群。
+
+## 感谢
+此项目基于 https://github.com/dodgepudding/wechat-php-sdk 项目改版而来，在此对开发者 dodgepudding 表示感谢。
+由于wechat-php-sdk 项目已长期未维护，近年微信生态已增加了很多新的能力，而且自2015年微信推出微信开放平台第三方开发方式以来，第三方开发方式逐渐流行，因此UCToo开发了第三方平台版本的SDK。
+
+## 捐赠
+如果您觉得wechatopen对您有帮助，欢迎请作者一杯咖啡
+
+![捐赠wechat]( .png)
+
+License
+-------
+This is licensed under the GNU LGPL, version 2.1 or later.   
+For details, see: http://creativecommons.org/licenses/LGPL/2.1/
