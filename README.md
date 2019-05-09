@@ -8,7 +8,7 @@ php sdk for wechat open platform.
 ## 知识准备
 使用前请先查看微信公众平台、微信开放平台、微信支付官方文档：  
 微信公众平台： http://mp.weixin.qq.com/wiki/  
-微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&lang=zh_CN  
+微信开放平台： https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&id=open1419318292&token=&lang=zh_CN  
 微信支付：https://pay.weixin.qq.com/wiki/doc/api/index.html  
 
 ## 目录 
@@ -518,6 +518,199 @@ uct_mpopen表需要填写appid、appsecret、encodingAesKey、token字段，正�
    //主动接口
    $weObj->wxaCommit($wxapptemplate->template_id, $wxapptemplate->ext_json, $wxapptemplate->user_version, $wxapptemplate->user_desc,$appinfo['appid'], $appinfo['authorizer_refresh_token']);
 ```
+被动接口一般需要在第三方平台配置的消息与事件接收URL的方法中，根据应用系统需要实现一个消息中控服务器逻辑，例如：
+```php
+//与微信交互的中控服务器逻辑可以自己定义，这里实现一个通用的
+switch ($type) {
+    //事件
+    case TPWechatOpen::MSGTYPE_EVENT:         //先处理事件型消息
+        $event = $this->weObj->getRevEvent();
+        if($appid == 'wx570bc396a51b8ff8'){  //公众号全网测试帐号
+            $this->weObj->text($event['event'].'_callback')->reply();
+        }
+        switch ($event['event']) {
+            //关注
+            case TPWechatOpen::EVENT_SUBSCRIBE:
+
+                //二维码关注
+                if(isset($event['eventkey']) && isset($event['ticket'])){
+
+                    //普通关注
+                }else{
+
+                }
+
+                //获取回复数据
+
+
+                $this->weObj->reply();
+
+                if(!$user["subscribe"]){   //未关注，并设置关注状态为已关注
+                   $user["subscribe"] = 1;
+                   $user->where(['openid'=>$openid])->update(["subscribe"=>1]);
+                }
+             break;
+            //扫描二维码
+            case TPWechatOpen::EVENT_SCAN:
+
+                break;
+            //地理位置
+            case TPWechatOpen::EVENT_LOCATION:
+
+                break;
+            //自定义菜单 - 点击菜单拉取消息时的事件推送
+            case TPWechatOpen::EVENT_MENU_CLICK:
+
+                $this->weObj->reply();  //在addons中处理完业务逻辑，回复消息给用户
+                break;
+
+            //自定义菜单 - 点击菜单跳转链接时的事件推送
+            case TPWechatOpen::EVENT_MENU_VIEW:
+
+                break;
+            //自定义菜单 - 扫码推事件的事件推送
+            case TPWechatOpen::EVENT_MENU_SCAN_PUSH:
+
+                break;
+            //自定义菜单 - 扫码推事件且弹出“消息接收中”提示框的事件推送
+            case TPWechatOpen::EVENT_MENU_SCAN_WAITMSG:
+
+                break;
+            //自定义菜单 - 弹出系统拍照发图的事件推送
+            case TPWechatOpen::EVENT_MENU_PIC_SYS:
+
+                break;
+            //自定义菜单 - 弹出拍照或者相册发图的事件推送
+            case TPWechatOpen::EVENT_MENU_PIC_PHOTO:
+
+                break;
+            //自定义菜单 - 弹出微信相册发图器的事件推送
+            case TPWechatOpen::EVENT_MENU_PIC_WEIXIN:
+
+                break;
+            //自定义菜单 - 弹出地理位置选择器的事件推送
+            case TPWechatOpen::EVENT_MENU_LOCATION:
+
+                break;
+            //取消关注
+            case TPWechatOpen::EVENT_UNSUBSCRIBE:
+                if($user["subscribe"]){
+                    $user["subscribe"] = 0;     //取消关注设置关注状态为取消
+                    $user->where(['openid'=>$user['openid']])->update(["subscribe"=>0]);
+                }
+                break;
+            //群发接口完成后推送的结果
+            case TPWechatOpen::EVENT_SEND_MASS:
+
+                break;
+            //模板消息完成后推送的结果
+            case TPWechatOpen::EVENT_SEND_TEMPLATE:
+                
+                break;
+            //小程序审核成功
+            case TPWechatOpen::EVENT_WXAPP_AUDIT_SUCCESS:
+                $wxapp_audit_info = model('wxapp_audit_info');
+                $userTemplate = WxappUserTemplate::get(['audit_status' => 2, 'mp_id' => $appinfo['appletid'] ]);
+                $wxapp_audit_info->mp_id = $appinfo['appletid'];
+                $userTemplate->audit_status = $wxapp_audit_info->audit_status = 0;   //审核状态，其中0为审核成功，1为审核失败，2为审核中
+                $wxapp_audit_info->auditid = $userTemplate->auditid;
+                $userTemplate->succ_time = $wxapp_audit_info->succ_time = $data['SuccTime'];
+                $wxapp_audit_info->save();   //保存审核记录
+                $userTemplate->save();       //保存审核结果
+                break;
+            //小程序审核失败
+            case TPWechatOpen::EVENT_WXAPP_AUDIT_FAIL:
+                $wxapp_audit_info = model('wxapp_audit_info');
+                $userTemplate = WxappUserTemplate::get(['audit_status' => 2, 'mp_id' => $appinfo['appletid'] ]);
+                $wxapp_audit_info->mp_id = $appinfo['appletid'];
+                $userTemplate->audit_status = $wxapp_audit_info->audit_status = 1;   //审核状态，其中0为审核成功，1为审核失败，2为审核中
+                $wxapp_audit_info->auditid = $userTemplate->auditid;
+                $userTemplate->fail_time = $wxapp_audit_info->fail_time = $data['FailTime'];
+                $userTemplate->reason = $wxapp_audit_info->reason = $data['Reason'];
+                $wxapp_audit_info->save();   //保存审核记录
+                $userTemplate->save();       //保存审核结果
+                break;
+            case TPWechatOpen::EVENT_USER_ENTER_TEMPSESSION:
+                Hook::listen("user_enter_tempsession", $this->weObj);  //把消息分发到实现了keyword方法的addons中,参数中包含本SDK的实例
+                break;
+            default:
+
+                break;
+        }
+        break;
+    //文本
+    case TPWechatOpen::MSGTYPE_TEXT :
+        //全网发布测试
+        if($appid == 'wx570bc396a51b8ff8' || $appid == 'wx2cdf8e0dffd4b2b2'){
+            if($data['Content']=='TESTCOMPONENT_MSG_TYPE_TEXT') { //回复文本
+                $this->weObj->text('TESTCOMPONENT_MSG_TYPE_TEXT_callback')->reply();
+            }else{
+                    echo '';
+                    $rc_data = explode(':',$data['Content']);
+
+                    $aInfo = $this->weObj->getAuthorizationInfo($rc_data[1]);
+
+                    $access_token = $aInfo['authorization_info']['authorizer_access_token'];
+                    $kf_data = array(
+                    'touser'=>$this->weObj->getRevFrom(),
+                    'msgtype'=>'text',
+                    "text"=>array(
+                        'content'=>"$rc_data[1]_from_api"
+                        )
+                    );
+                $this->weObj->sendTestCustomMessage($kf_data,$appid,$appinfo['authorizer_access_token']);
+            }
+        }
+        if($appid == 'wxd101a85aa106f53e'){
+            if($data['Content']=='TESTCOMPONENT_MSG_TYPE_TEXT') { //回复文本
+                $this->weObj->text('TESTCOMPONENT_MSG_TYPE_TEXT_callback')->reply();
+            }else{
+                echo '';
+                $rc_data = explode(':',$data['Content']);
+                $aInfo = $this->weObj->getAuthorizationInfo($rc_data[1]);
+                trace($aInfo, 'test$aInfo');
+                $access_token = $aInfo['authorization_info']['authorizer_access_token'];
+                $kf_data = array(
+                    'touser'=>$this->weObj->getRevFrom(),
+                    'msgtype'=>'text',
+                    "text"=>array(
+                        'content'=>"$rc_data[1]_from_api"
+                    )
+                );
+                $this->weObj->sendTestCustomMessage($kf_data,$appid,$appinfo['authorizer_access_token']);
+            }
+        }
+        //正常业务规则，关键字匹配
+        Hook::listen("text_auto_reply", $this->weObj);
+        Hook::listen("subscribemsg", $this->weObj);
+
+        break;
+    //图像
+    case TPWechatOpen::MSGTYPE_IMAGE :
+
+        break;
+    //语音
+    case TPWechatOpen::MSGTYPE_VOICE :
+
+        break;
+    //视频
+    case TPWechatOpen::MSGTYPE_VIDEO :
+
+        break;
+    //位置
+    case TPWechatOpen::MSGTYPE_LOCATION :
+
+        break;
+    //链接
+    case TPWechatOpen::MSGTYPE_LINK :
+
+        break;
+    default:
+
+        break;
+}
+```
+主动接口直接在业务功能实现点调用SDK相应方法。
 
 ## 交流群
 QQ群：102324323，使用疑问，开发，贡献代码请加群。
