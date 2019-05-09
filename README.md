@@ -13,7 +13,7 @@ php sdk for wechat open platform.
 
 ## 目录 
 > **[WechatOpen.php 官方API类库](#user-content-1-wechatopenphp-官方api类库)**  
-> **[TPWechatOpen.php SDK适配ThinkPHP5类库](##2-tpwechatopenphp-sdk适配ThinkPHP5类库)**  
+> **[TPWechatOpen.php SDK适配ThinkPHP5类库](#2-tpwechatopenphp-sdk适配ThinkPHP5类库)**  
 > **[errCode.php 全局返回码类](#user-content-5-errcodephp-全局返回码类)**  
 
 ## Requirement 运行要求
