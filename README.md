@@ -87,7 +87,6 @@ $ composer require uctoo/wechatopen:dev-master
 
 ### 被动接口方法:   
 * valid() 验证连接，被动接口处于加密模式时必须调用
-* 
 * getRev() 获取微信服务器发来信息(不返回结果)，被动接口必须调用
 * getRevData() 返回微信服务器发来的信息（数组）
 * getRevFrom()  返回消息发送者的userid
