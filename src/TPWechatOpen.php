@@ -14,13 +14,7 @@
  *  @link https://github.com/uctoo/wechatopen-php-sdk
  *  @version 1.0
  *  usage:
- *   $options = array(
- *			'token'=>'tokenaccesskey', //填写你设定的key
- *			'encodingaeskey'=>'encodingaeskey', //填写加密用的EncodingAESKey
- *			'component_appid'=>'wxdk1234567890', //填写第三方平台的appid
- *          'component_appsecret'=>'xxxxxxxxxxxxxxxxxxx' //填写第三方平台的appid
- *		);
- *	 $weObj = new Wechat($options);
+ *	 $weObj = new Wechat();            //从数据库mpopen表中获取了第三方平台的配置参数
  *   $weObj->setAppid($appid);         //授权到第三方平台的公众号/小程序 appid
  *   $weObj->setAuthorizerRefreshToken($authorizer_refresh_token);         //授权到第三方平台的公众号/小程序 authorizer_refresh_token
  *
@@ -48,7 +42,7 @@
  *   		"button"=>
  *   			array(
  *   				array('type'=>'click','name'=>'最新消息','key'=>'MENU_KEY_NEWS'),
- *   				array('type'=>'view','name'=>'我要搜索','url'=>'http://www.baidu.com'),
+ *   				array('type'=>'view','name'=>'我要购物','url'=>'https://www.weiyoho.com'),
  *   				)
  *  		);
  *   $result = $weObj->createMenu($newmenu);
@@ -58,10 +52,10 @@ use app\common\model\WechatApplet;
 
 class TPWechatOpen extends WechatOpen
 {
-    public function __construct($options = '')
+    public function __construct($options = [])
     {
         parent::__construct($options);
-        if($options == ''){
+        if(!$options){
             $model = model('mpopen');
             $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
             $options['token'] = $component['token'];
