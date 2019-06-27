@@ -55,7 +55,7 @@ class TPWechatOpen extends WechatOpen
     public function __construct($options = [])
     {
         parent::__construct($options);
-        if(!$options){
+        if($options == []){
             $model = model('mpopen');
             $component = $model->where('status', 1)->find(); //数据库中保存的第三方平台信息
             $options['token'] = $component['token'];
